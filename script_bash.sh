@@ -1,14 +1,20 @@
+# shebang
 #!/bin/bash
 
+# check if the user has correctly entered 3 arguments
+# if not, we show how to correctly execute the script and exit with error code 1
 if ! [ "$#" -eq 3 ]; then
 	echo "Usage: $0 <actix_log> <nginx_access_log> <nginx_error_log>"
 	exit 1
 fi
+
+# Init variables with absolute path of Actix_log, nginx_access_log and nginx_error_log
 ACTIX_LOG=$(realpath "$1")
 NGINX_ACCESS_LOG=$(realpath "$2")
 NGINX_ERROR_LOG=$(realpath "$3")
 
-MOST_SERVED=$(grep "200 | GET" $ACTIX_LOG | awk '{print $7}' | sort | uniq -c | sort -n)	# ligne 10
+
+MOST_SERVED=$(grep "200 | GET" $ACTIX_LOG | awk '{print $7}' | sort | uniq -c | sort -n)	
 # echo "$MOST_SERVED"
 
 echo "$MOST_SERVED" > tmp.txt
@@ -18,7 +24,7 @@ for extension in "${EXTENSIONS[@]}"; do
 	SUPPR=$(cat ./tmp.txt | grep -v "$extension")
 	echo "$SUPPR" > ./tmp.txt
 done
-MOST_SERVED=$(cat ./tmp.txt)									# ligne 20
+MOST_SERVED=$(cat ./tmp.txt)
 # echo "$MOST_SERVED"
 
 TMP=$(echo "$MOST_SERVED" | awk '$1 > 10 { print $2 " : " $1}')
@@ -28,7 +34,7 @@ ENDPOINTS=("admin" "debug" "login" ".git")
 for endpoint in ${ENDPOINTS[@]}; do
 	IPS=$(cat $NGINX_ACCESS_LOG | grep "$endpoint" | awk '{print $1}')
 	echo "$IPS" >> ./ip_blacklist.txt
-done												# ligne 30
+done
 
 METHODS=("GET" "POST" "HEAD")
 for method in ${METHOD[@]}; do
@@ -37,7 +43,6 @@ for method in ${METHOD[@]}; do
 done
 
 echo "$(cat ./ip_blacklist.txt | sort -n | uniq)" > ./ip_blacklist.txt
-												# ligne 40
 
 DOWNTIME=$(grep "111: Unknown error" $NGINX_ERROR_LOG| awk '{print $1" "$2 " DOWN" }')
 # echo "$DOWNTIME"
